@@ -15,7 +15,8 @@ interface ChatInputProps {
   onStop: () => void
   isStreaming: boolean
   provider: Provider
-  onProviderChange: (provider: Provider) => void
+  model: string
+  onModelChange: (provider: Provider, model: string) => void
   initialValue?: string
 }
 
@@ -24,7 +25,8 @@ export function ChatInput({
   onStop,
   isStreaming,
   provider,
-  onProviderChange,
+  model,
+  onModelChange,
   initialValue,
 }: ChatInputProps) {
   const [value, setValue] = useState(initialValue || "")
@@ -45,37 +47,32 @@ export function ChatInput({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-4">
+    <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-4">
       <PromptInput
         value={value}
         onValueChange={setValue}
         isLoading={isStreaming}
         onSubmit={handleSubmit}
-        className="border-border/60 bg-card/80 backdrop-blur-sm glow-brand"
+        className="border-3 border-foreground bg-card shadow-[4px_4px_0px_hsl(var(--shadow-color))] rounded-none transition-shadow duration-200"
       >
         <PromptInputTextarea
-          placeholder="Say something. I won't sugarcoat the response."
-          className="text-sm placeholder:text-muted-foreground/50"
+          placeholder="Ask something. You'll get an honest answer."
+          className="text-sm font-medium placeholder:text-muted-foreground/60"
         />
         <PromptInputActions className="justify-between px-2 pb-1 pt-1">
           <ModelSelector
-            value={provider}
-            onChange={onProviderChange}
+            provider={provider}
+            model={model}
+            onChange={onModelChange}
             disabled={isStreaming}
           />
           <PromptInputAction
             tooltip={isStreaming ? "Stop generating" : "Send message"}
           >
             <Button
-              variant="default"
+              variant={isStreaming ? "destructive" : value.trim() ? "default" : "ghost"}
               size="icon"
-              className={`h-8 w-8 rounded-full transition-all ${
-                isStreaming
-                  ? "bg-destructive hover:bg-destructive/80"
-                  : value.trim()
-                    ? "bg-brand text-brand-foreground hover:bg-brand/80"
-                    : "bg-muted text-muted-foreground"
-              }`}
+              className="h-9 w-9"
               onClick={handleSubmit}
               disabled={!isStreaming && !value.trim()}
             >
@@ -88,8 +85,8 @@ export function ChatInput({
           </PromptInputAction>
         </PromptInputActions>
       </PromptInput>
-      <p className="mt-2 text-center text-[10px] text-muted-foreground/40">
-        NeutralGPT will be direct. That's the point.
+      <p className="mt-2 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
+        GOATED GPT will be direct. That's the point.
       </p>
     </div>
   )

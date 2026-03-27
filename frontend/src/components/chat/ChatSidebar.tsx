@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Plus, MessageSquare, Trash2, X } from "lucide-react"
+import { Plus, MessageSquare, Trash2, X, Flame, Home } from "lucide-react"
 import { fetchConversations, deleteConversation } from "@/lib/api"
 import type { ConversationListItem } from "@/lib/api"
 
@@ -22,6 +22,7 @@ export function ChatSidebar({
   refreshTrigger,
 }: ChatSidebarProps) {
   const [conversations, setConversations] = useState<ConversationListItem[]>([])
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchConversations()
@@ -41,16 +42,34 @@ export function ChatSidebar({
   return (
     <div className="flex h-full flex-col bg-sidebar">
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <span className="text-gradient text-sm font-bold tracking-wider uppercase">
-          NeutralGPT
-        </span>
+      <div className="flex shrink-0 items-center justify-between border-b-3 border-foreground p-4">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 transition-all hover:opacity-80"
+        >
+          <div className="flex h-7 w-7 items-center justify-center border-2 border-foreground bg-primary shadow-[2px_2px_0px_hsl(var(--shadow-color))]">
+            <Flame className="h-3.5 w-3.5 text-primary-foreground" />
+          </div>
+          <span className="font-serif text-sm font-bold uppercase tracking-wide text-sidebar-foreground">
+            GOATED GPT
+          </span>
+        </button>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            className="h-8 w-8"
+            onClick={() => navigate("/")}
+            title="Home"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={onNewConversation}
+            title="New chat"
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -58,7 +77,7 @@ export function ChatSidebar({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground md:hidden"
+              className="h-8 w-8 md:hidden"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
@@ -67,38 +86,34 @@ export function ChatSidebar({
         </div>
       </div>
 
-      <Separator className="bg-sidebar-border" />
-
       {/* Conversations */}
       <ScrollArea className="flex-1 px-2 py-2">
         {conversations.length === 0 ? (
-          <div className="px-3 py-8 text-center text-xs text-muted-foreground">
+          <div className="px-3 py-8 text-center text-xs font-bold uppercase tracking-wide text-muted-foreground">
             No conversations yet.
             <br />
             Start one. Say something wrong.
           </div>
         ) : (
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {conversations.map((conv) => (
               <button
                 key={conv.id}
                 onClick={() => onSelectConversation(conv.id)}
-                className={`group flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                className={`group flex w-full items-center gap-2 border-2 px-3 py-2.5 text-left text-sm font-medium transition-all ${
                   currentConversationId === conv.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "border-foreground bg-sidebar-accent shadow-[2px_2px_0px_hsl(var(--shadow-color))] text-sidebar-accent-foreground"
+                    : "border-transparent text-sidebar-foreground/70 hover:border-foreground hover:bg-sidebar-accent/50"
                 }`}
               >
-                <MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-40" />
+                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
                 <span className="flex-1 truncate">{conv.title}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                <button
+                  className="h-6 w-6 shrink-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
                   onClick={(e) => handleDelete(e, conv.id)}
                 >
-                  <Trash2 className="h-3 w-3 text-destructive" />
-                </Button>
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </button>
             ))}
           </div>
@@ -106,9 +121,9 @@ export function ChatSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-4">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/50">
-          No sugarcoating. No validation.
+      <div className="shrink-0 border-t-3 border-foreground p-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Honesty over comfort.
         </p>
       </div>
     </div>

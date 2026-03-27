@@ -92,7 +92,7 @@ function MarkdownComponent({
   const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children])
 
   return (
-    <div className={className}>
+    <div className={cn("markdown-prose", className)}>
       {blocks.map((block, index) => (
         <MemoizedMarkdownBlock
           key={`${blockId}-block-${index}`}

@@ -4,6 +4,7 @@ import { parseSSE } from "@/lib/sse-parser"
 
 export interface UseChatOptions {
   provider: Provider
+  model: string
   conversationId: string | null
   onConversationCreated?: (id: string) => void
 }
@@ -19,6 +20,7 @@ export interface UseChatReturn {
 
 export function useChat({
   provider,
+  model,
   conversationId,
   onConversationCreated,
 }: UseChatOptions): UseChatReturn {
@@ -42,7 +44,7 @@ export function useChat({
     async (content: string) => {
       if (!content.trim() || isStreaming) return
 
-      console.log(`[useChat] Sending message: "${content.slice(0, 50)}..." | provider=${provider} | convId=${convIdRef.current}`)
+      console.log(`[useChat] Sending: "${content.slice(0, 50)}..." | provider=${provider} | model=${model} | convId=${convIdRef.current}`)
       setError(null)
       const userMsg: ChatMessage = { role: "user", content }
       setMessages((prev) => [...prev, userMsg])
@@ -62,6 +64,7 @@ export function useChat({
           body: JSON.stringify({
             message: content,
             provider,
+            model,
             conversation_id: convIdRef.current,
           }),
           signal: controller.signal,
@@ -111,7 +114,7 @@ export function useChat({
                 const data = JSON.parse(event.data)
                 switch (event.event) {
                   case "metadata":
-                    console.log(`[useChat] Got metadata: convId=${data.conversation_id}`)
+                    console.log(`[useChat] Got metadata: convId=${data.conversation_id}, model=${data.model}`)
                     if (data.conversation_id && !convIdRef.current) {
                       convIdRef.current = data.conversation_id
                       onConversationCreated?.(data.conversation_id)
@@ -164,7 +167,7 @@ export function useChat({
         console.log("[useChat] Stream finished")
       }
     },
-    [provider, isStreaming, onConversationCreated]
+    [provider, model, isStreaming, onConversationCreated]
   )
 
   return { messages, isStreaming, error, sendMessage, stopStreaming, setMessages }

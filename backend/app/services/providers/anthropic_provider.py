@@ -10,12 +10,22 @@ from app.services.providers.base import BaseLLMProvider, SYSTEM_PROMPT
 logger = logging.getLogger("neutralgpt.providers.anthropic")
 
 
+ANTHROPIC_MODELS = {
+    "claude-opus-4-0": {"label": "Claude Opus 4", "category": "Claude 4"},
+    "claude-sonnet-4-0": {"label": "Claude Sonnet 4", "category": "Claude 4"},
+    "claude-sonnet-4-5-20250514": {"label": "Claude Sonnet 4.5", "category": "Claude 4.5"},
+    "claude-haiku-4-5-20251001": {"label": "Claude Haiku 4.5", "category": "Claude 4.5"},
+    "claude-3-5-sonnet-20241022": {"label": "Claude 3.5 Sonnet", "category": "Claude 3.5"},
+    "claude-3-5-haiku-20241022": {"label": "Claude 3.5 Haiku", "category": "Claude 3.5"},
+}
+
+
 class AnthropicProvider(BaseLLMProvider):
-    def __init__(self):
-        logger.debug(f"Initializing Anthropic provider with model={settings.ANTHROPIC_MODEL}")
+    def __init__(self, model: str | None = None):
+        self.model = model or settings.ANTHROPIC_MODEL
+        logger.debug(f"Initializing Anthropic provider with model={self.model}")
         logger.debug(f"API key present: {bool(settings.ANTHROPIC_API_KEY)}")
         self.client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-        self.model = settings.ANTHROPIC_MODEL
 
     def _prepare_messages(self, messages: list[ChatMessage]) -> list[dict]:
         """Anthropic uses a separate system parameter, not a system message in the list."""

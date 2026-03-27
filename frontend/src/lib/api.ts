@@ -1,5 +1,11 @@
 export type Provider = "openai" | "anthropic" | "google"
 
+export interface ModelInfo {
+  id: string
+  label: string
+  category: string
+}
+
 export interface ChatMessage {
   role: "user" | "assistant" | "system"
   content: string
@@ -9,6 +15,7 @@ export interface ConversationListItem {
   id: string
   title: string
   provider: string
+  model: string
   created_at: string
   updated_at: string
 }
@@ -18,6 +25,7 @@ export interface Conversation {
   title: string
   messages: ChatMessage[]
   provider: string
+  model: string
   created_at: string
   updated_at: string
 }
@@ -48,8 +56,14 @@ export async function fetchProviders(): Promise<string[]> {
   return data.providers
 }
 
+export async function fetchModels(): Promise<Record<string, ModelInfo[]>> {
+  const res = await fetch(`${API_BASE}/models`)
+  if (!res.ok) throw new Error("Failed to fetch models")
+  return res.json()
+}
+
 export interface StreamCallbacks {
-  onMetadata: (data: { conversation_id: string }) => void
+  onMetadata: (data: { conversation_id: string; model?: string }) => void
   onDelta: (content: string) => void
   onDone: (fullContent: string) => void
   onError: (error: string) => void
@@ -58,6 +72,7 @@ export interface StreamCallbacks {
 export async function streamChat(
   message: string,
   provider: Provider,
+  model: string,
   conversationId: string | null,
   callbacks: StreamCallbacks,
   signal?: AbortSignal
@@ -68,6 +83,7 @@ export async function streamChat(
     body: JSON.stringify({
       message,
       provider,
+      model,
       conversation_id: conversationId,
     }),
     signal,

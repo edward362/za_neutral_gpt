@@ -10,9 +10,11 @@ class ConversationStore:
     def __init__(self):
         self._conversations: dict[str, Conversation] = {}
 
-    def create_conversation(self, provider: str = "openai") -> Conversation:
+    def create_conversation(
+        self, provider: str = "openai", model: str = "gpt-4o"
+    ) -> Conversation:
         conv_id = str(uuid.uuid4())
-        conversation = Conversation(id=conv_id, provider=provider)
+        conversation = Conversation(id=conv_id, provider=provider, model=model)
         self._conversations[conv_id] = conversation
         return conversation
 
@@ -36,6 +38,7 @@ class ConversationStore:
                 id=c.id,
                 title=c.title,
                 provider=c.provider,
+                model=c.model,
                 created_at=c.created_at,
                 updated_at=c.updated_at,
             )

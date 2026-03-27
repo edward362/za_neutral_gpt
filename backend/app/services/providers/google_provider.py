@@ -11,12 +11,20 @@ from app.services.providers.base import BaseLLMProvider, SYSTEM_PROMPT
 logger = logging.getLogger("neutralgpt.providers.google")
 
 
+GOOGLE_MODELS = {
+    "gemini-2.5-pro": {"label": "Gemini 2.5 Pro", "category": "Gemini 2.5"},
+    "gemini-2.5-flash": {"label": "Gemini 2.5 Flash", "category": "Gemini 2.5"},
+    "gemini-2.0-flash": {"label": "Gemini 2.0 Flash", "category": "Gemini 2.0"},
+    "gemini-2.0-flash-lite": {"label": "Gemini 2.0 Flash Lite", "category": "Gemini 2.0"},
+}
+
+
 class GoogleProvider(BaseLLMProvider):
-    def __init__(self):
-        logger.debug(f"Initializing Google provider with model={settings.GOOGLE_MODEL}")
+    def __init__(self, model: str | None = None):
+        self.model = model or settings.GOOGLE_MODEL
+        logger.debug(f"Initializing Google provider with model={self.model}")
         logger.debug(f"API key present: {bool(settings.GOOGLE_API_KEY)}")
         self.client = genai.Client(api_key=settings.GOOGLE_API_KEY)
-        self.model = settings.GOOGLE_MODEL
 
     def _prepare_contents(self, messages: list[ChatMessage]) -> list[types.Content]:
         """Google Genai uses Content objects with 'user' and 'model' roles."""

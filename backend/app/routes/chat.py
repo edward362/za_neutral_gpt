@@ -23,7 +23,10 @@ router = APIRouter(prefix="/api", tags=["chat"])
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Non-streaming chat endpoint."""
-    logger.info(f"[chat] provider={request.provider}, conv_id={request.conversation_id}, message={request.message[:80]}...")
+    logger.info(
+        f"[chat] provider={request.provider}, model={request.model}, "
+        f"conv_id={request.conversation_id}, message={request.message[:80]}..."
+    )
 
     # Get or create conversation
     if request.conversation_id:
@@ -32,7 +35,10 @@ async def chat(request: ChatRequest):
             logger.warning(f"[chat] Conversation {request.conversation_id} not found")
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
-        conversation = store.create_conversation(provider=request.provider)
+        conversation = store.create_conversation(
+            provider=request.provider,
+            model=request.model or "gpt-4o",
+        )
         logger.info(f"[chat] Created new conversation: {conversation.id}")
 
     # Add user message
@@ -42,8 +48,8 @@ async def chat(request: ChatRequest):
 
     # Get response from LLM
     try:
-        provider = LLMFactory.create(request.provider)
-        logger.info(f"[chat] Calling {request.provider} for response...")
+        provider = LLMFactory.create(request.provider, model=request.model)
+        logger.info(f"[chat] Calling {request.provider} ({provider.model}) for response...")
         response_text = await provider.get_response(conversation.messages)
         logger.info(f"[chat] Got response ({len(response_text)} chars)")
     except Exception as e:
@@ -59,13 +65,17 @@ async def chat(request: ChatRequest):
         conversation_id=conversation.id,
         content=response_text,
         provider=request.provider,
+        model=provider.model,
     )
 
 
 @router.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
     """Streaming chat endpoint using SSE."""
-    logger.info(f"[stream] provider={request.provider}, conv_id={request.conversation_id}, message={request.message[:80]}...")
+    logger.info(
+        f"[stream] provider={request.provider}, model={request.model}, "
+        f"conv_id={request.conversation_id}, message={request.message[:80]}..."
+    )
 
     # Get or create conversation
     if request.conversation_id:
@@ -74,7 +84,10 @@ async def chat_stream(request: ChatRequest):
             logger.warning(f"[stream] Conversation {request.conversation_id} not found")
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
-        conversation = store.create_conversation(provider=request.provider)
+        conversation = store.create_conversation(
+            provider=request.provider,
+            model=request.model or "gpt-4o",
+        )
         logger.info(f"[stream] Created new conversation: {conversation.id}")
 
     # Add user message
@@ -83,8 +96,8 @@ async def chat_stream(request: ChatRequest):
     logger.debug(f"[stream] Added user message. Total messages: {len(conversation.messages)}")
 
     try:
-        provider = LLMFactory.create(request.provider)
-        logger.info(f"[stream] Provider created: {request.provider}")
+        provider = LLMFactory.create(request.provider, model=request.model)
+        logger.info(f"[stream] Provider created: {request.provider} ({provider.model})")
     except Exception as e:
         logger.error(f"[stream] Failed to create provider: {e}")
         raise HTTPException(status_code=500, detail=f"Provider error: {str(e)}")
@@ -92,14 +105,17 @@ async def chat_stream(request: ChatRequest):
     async def event_generator():
         full_response = ""
         try:
-            # Send conversation_id first
+            # Send conversation_id and model first
             logger.debug(f"[stream] Sending metadata event with conv_id={conversation.id}")
             yield {
                 "event": "metadata",
-                "data": json.dumps({"conversation_id": conversation.id}),
+                "data": json.dumps({
+                    "conversation_id": conversation.id,
+                    "model": provider.model,
+                }),
             }
 
-            logger.info(f"[stream] Starting to stream from {request.provider}...")
+            logger.info(f"[stream] Starting to stream from {request.provider} ({provider.model})...")
             chunk_count = 0
             async for chunk in provider.stream_response(conversation.messages):
                 full_response += chunk
@@ -165,3 +181,11 @@ async def list_providers():
     providers = LLMFactory.available_providers()
     logger.debug(f"[providers] Available: {providers}")
     return {"providers": providers}
+
+
+@router.get("/models")
+async def list_models():
+    """List all available models grouped by provider."""
+    models = LLMFactory.available_models()
+    logger.debug(f"[models] Returning models for {list(models.keys())}")
+    return models
